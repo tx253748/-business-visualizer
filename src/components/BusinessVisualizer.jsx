@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 
 const BusinessVisualizer = () => {
-  const [phase, setPhase] = useState('basics');
+  const [phase, setPhase] = useState('basics'); // basics -> details -> funnel -> result
   const [funnelStep, setFunnelStep] = useState(0);
   const [basics, setBasics] = useState({
+    // 基本情報
     business: '',
     target: '',
     targetType: '',
@@ -12,6 +13,24 @@ const BusinessVisualizer = () => {
     goal: '',
     timeline: '',
     products: '',
+    // 現状把握
+    currentRevenue: '',
+    monthlyInquiries: '',
+    conversionRate: '',
+    // 強み
+    differentiation: '',
+    experience: '',
+    specializedIndustry: '',
+    // 課題
+    biggestProblem: '',
+    failedStrategies: '',
+    // スキル
+    canEditVideo: '',
+    canWrite: '',
+    canSpeakPublicly: '',
+    // 予算・競合
+    marketingBudget: '',
+    competitors: '',
   });
   const [answers, setAnswers] = useState({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -430,7 +449,143 @@ const BusinessVisualizer = () => {
             </div>
           </div>
 
-          <button onClick={() => setPhase('funnel')} disabled={!basics.business || !basics.targetType} style={{ marginTop: '24px', width: '100%', padding: '14px', border: 'none', borderRadius: '8px', background: basics.business && basics.targetType ? '#3b82f6' : '#cbd5e1', color: '#fff', cursor: basics.business && basics.targetType ? 'pointer' : 'not-allowed', fontSize: '15px', fontWeight: '600' }}>次へ</button>
+          <button onClick={() => setPhase('details')} disabled={!basics.business || !basics.targetType} style={{ marginTop: '24px', width: '100%', padding: '14px', border: 'none', borderRadius: '8px', background: basics.business && basics.targetType ? '#3b82f6' : '#cbd5e1', color: '#fff', cursor: basics.business && basics.targetType ? 'pointer' : 'not-allowed', fontSize: '15px', fontWeight: '600' }}>次へ</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Phase: 詳細情報入力
+  if (phase === 'details') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '32px 16px' }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+          <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>{basics.business}</p>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1e293b', marginBottom: '8px' }}>もう少し詳しく教えてください</h1>
+          <p style={{ color: '#94a3b8', fontSize: '12px', marginBottom: '24px' }}>わからない項目は空欄でOKです</p>
+
+          {/* 現状把握 */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>📊 現状把握</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>現在の月間売上</label>
+              <input type="text" value={basics.currentRevenue} onChange={(e) => setBasics({ ...basics, currentRevenue: e.target.value })} placeholder="例：50万円、0円（これから）" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>月間の問い合わせ数</label>
+              <input type="text" value={basics.monthlyInquiries} onChange={(e) => setBasics({ ...basics, monthlyInquiries: e.target.value })} placeholder="例：5件、ほぼなし" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>成約率（問い合わせ→成約）</label>
+              <input type="text" value={basics.conversionRate} onChange={(e) => setBasics({ ...basics, conversionRate: e.target.value })} placeholder="例：30%、わからない" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+
+          {/* 強み */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>💪 強み・差別化</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>競合との差別化ポイント</label>
+              <textarea value={basics.differentiation} onChange={(e) => setBasics({ ...basics, differentiation: e.target.value })} placeholder="例：飲食店特化、スピード対応、運用サポート込み" rows={2} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical' }} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>経験年数・実績</label>
+              <input type="text" value={basics.experience} onChange={(e) => setBasics({ ...basics, experience: e.target.value })} placeholder="例：3年、50社以上" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>得意な業界・領域</label>
+              <input type="text" value={basics.specializedIndustry} onChange={(e) => setBasics({ ...basics, specializedIndustry: e.target.value })} placeholder="例：美容室、飲食店、EC" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+
+          {/* 課題 */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>🔥 課題</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>今、一番困っていること</label>
+              <textarea value={basics.biggestProblem} onChange={(e) => setBasics({ ...basics, biggestProblem: e.target.value })} placeholder="例：問い合わせがこない、単価が上げられない" rows={2} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical' }} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>過去に試して失敗した施策</label>
+              <textarea value={basics.failedStrategies} onChange={(e) => setBasics({ ...basics, failedStrategies: e.target.value })} placeholder="例：広告を出したが赤字、SNSが続かなかった" rows={2} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical' }} />
+            </div>
+          </div>
+
+          {/* スキル */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>🛠 スキル・できること</h3>
+            
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>動画編集</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {['できる', '少しできる', 'できない'].map(opt => {
+                  const isSelected = basics.canEditVideo === opt;
+                  return (
+                    <button key={opt} onClick={() => setBasics({ ...basics, canEditVideo: opt })} style={{ flex: 1, padding: '8px', border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '6px', background: isSelected ? '#dbeafe' : '#fff', color: isSelected ? '#1e40af' : '#475569', cursor: 'pointer', fontSize: '12px' }}>{opt}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>ライティング（ブログ・note等）</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {['得意', '普通', '苦手'].map(opt => {
+                  const isSelected = basics.canWrite === opt;
+                  return (
+                    <button key={opt} onClick={() => setBasics({ ...basics, canWrite: opt })} style={{ flex: 1, padding: '8px', border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '6px', background: isSelected ? '#dbeafe' : '#fff', color: isSelected ? '#1e40af' : '#475569', cursor: 'pointer', fontSize: '12px' }}>{opt}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>営業・人前で話す</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {['得意', '普通', '苦手'].map(opt => {
+                  const isSelected = basics.canSpeakPublicly === opt;
+                  return (
+                    <button key={opt} onClick={() => setBasics({ ...basics, canSpeakPublicly: opt })} style={{ flex: 1, padding: '8px', border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '6px', background: isSelected ? '#dbeafe' : '#fff', color: isSelected ? '#1e40af' : '#475569', cursor: 'pointer', fontSize: '12px' }}>{opt}</button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 予算・競合 */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>💰 予算・競合</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>マーケティング予算（月額）</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {['0円', '〜3万円', '3〜10万円', '10万円以上'].map(opt => {
+                  const isSelected = basics.marketingBudget === opt;
+                  return (
+                    <button key={opt} onClick={() => setBasics({ ...basics, marketingBudget: opt })} style={{ padding: '8px 14px', border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '6px', background: isSelected ? '#dbeafe' : '#fff', color: isSelected ? '#1e40af' : '#475569', cursor: 'pointer', fontSize: '12px' }}>{opt}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '6px' }}>競合・意識している同業者</label>
+              <textarea value={basics.competitors} onChange={(e) => setBasics({ ...basics, competitors: e.target.value })} placeholder="例：○○社、個人で活動している△△さん" rows={2} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={() => setPhase('basics')} style={{ flex: 1, padding: '14px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff', color: '#475569', cursor: 'pointer', fontSize: '15px' }}>戻る</button>
+            <button onClick={() => setPhase('funnel')} style={{ flex: 2, padding: '14px', border: 'none', borderRadius: '8px', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '15px', fontWeight: '600' }}>次へ</button>
+          </div>
         </div>
       </div>
     );
@@ -650,7 +805,12 @@ const BusinessVisualizer = () => {
                 {recommendations.map((rec, i) => (
                   <div key={i} style={{ background: '#f8fafc', borderRadius: '8px', padding: '14px', borderLeft: '3px solid #3b82f6' }}>
                     <p style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b', margin: '0 0 6px 0' }}>{i + 1}. {rec.title}</p>
-                    <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 8px 0', lineHeight: '1.5' }}>{rec.reason}</p>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 6px 0', lineHeight: '1.5' }}>{rec.reason}</p>
+                    {rec.howTo && (
+                      <p style={{ fontSize: '12px', color: '#1e40af', margin: '0 0 8px 0', lineHeight: '1.5', background: '#dbeafe', padding: '8px 10px', borderRadius: '4px' }}>
+                        💡 {rec.howTo}
+                      </p>
+                    )}
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <span style={{ fontSize: '11px', color: '#64748b' }}>労力: <strong>{rec.effort}</strong></span>
                       <span style={{ fontSize: '11px', color: '#64748b' }}>効果: <strong>{rec.effect}</strong></span>
@@ -779,7 +939,7 @@ const BusinessVisualizer = () => {
             </div>
           </div>
 
-          <button onClick={() => { setPhase('basics'); setFunnelStep(0); setAnswers({}); setBasics({ business: '', target: '', targetType: '', priceRange: '', resource: '', goal: '', timeline: '', products: '' }); setAiDiagnosis(null); setApiError(null); }} style={{ padding: '12px 24px', background: '#475569', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>最初からやり直す</button>
+          <button onClick={() => { setPhase('basics'); setFunnelStep(0); setAnswers({}); setBasics({ business: '', target: '', targetType: '', priceRange: '', resource: '', goal: '', timeline: '', products: '', currentRevenue: '', monthlyInquiries: '', conversionRate: '', differentiation: '', experience: '', specializedIndustry: '', biggestProblem: '', failedStrategies: '', canEditVideo: '', canWrite: '', canSpeakPublicly: '', marketingBudget: '', competitors: '' }); setAiDiagnosis(null); setApiError(null); }} style={{ padding: '12px 24px', background: '#475569', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>最初からやり直す</button>
         </div>
       </div>
     );
