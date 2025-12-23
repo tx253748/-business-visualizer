@@ -157,10 +157,10 @@ ${funnel.map(f => {
   "industryStandard": {
     "awareness": ["この事業・ターゲットで実際に有効な認知施策を3-5個（日本市場で現実的なもの）"],
     "interest": ["実際に有効な興味喚起施策を3-5個"],
-    "action": ["実際に有効な行動誘導施策を3-5個"],
-    "purchase": ["実際に有効な成約要因を3-5個"],
-    "follow": ["実際に有効なフォロー施策を3-5個"],
-    "repeat": ["実際に有効なリピート施策を3-5個"]
+    "action": ["実際に有効な行動誘導施策を3個"],
+    "purchase": ["実際に有効な成約要因を3個"],
+    "follow": ["実際に有効なフォロー施策を3個"],
+    "repeat": ["実際に有効なリピート施策を3個"]
   }
 }
 
@@ -168,12 +168,16 @@ ${funnel.map(f => {
 - 「一般的なマーケティング施策」ではなく「この事業で実際に効くこと」を提案してください
 - LinkedInやXをtoBで安易に勧めないでください（日本では効果が限定的）
 - recommendationsは優先度順に3つ、リソースと時間軸を考慮して提示
-- industryStandardは「同業種で成功している事業者が実際にやっていること」を記載
-- JSONのみ返してください。説明文は不要です。`;
+- industryStandardは各3個、短いワードで記載
+- 各commentは1文で簡潔に（50文字以内）
+- overallCommentは2-3文で簡潔に
+- reason、howToは各1-2文で簡潔に
+- JSONのみ返してください。説明文は不要です。
+- 必ず完全なJSONを返してください。途中で切れないこと。`;
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+      max_tokens: 8000,
       messages: [
         { role: 'user', content: prompt }
       ],
@@ -185,19 +189,37 @@ ${funnel.map(f => {
     
     try {
       // JSONブロックを抽出（```json ... ``` があれば除去）
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content;
+      let jsonStr = content;
+      
+      // ```json ... ``` の形式を除去
+      const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonBlockMatch) {
+        jsonStr = jsonBlockMatch[1];
+      } else {
+        // 最初の { から最後の } までを抽出
+        const firstBrace = content.indexOf('{');
+        const lastBrace = content.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          jsonStr = content.slice(firstBrace, lastBrace + 1);
+        }
+      }
+      
       diagnosis = JSON.parse(jsonStr);
     } catch (e) {
-      console.error('JSON parse error:', e);
-      console.error('Raw content:', content);
-      return Response.json({ error: 'AI応答の解析に失敗しました' }, { status: 500 });
+      console.error('JSON parse error:', e.message);
+      console.error('Raw content length:', content.length);
+      console.error('Raw content (first 500 chars):', content.substring(0, 500));
+      return Response.json({ 
+        error: 'AI応答の解析に失敗しました', 
+        details: e.message,
+        contentPreview: content.substring(0, 200)
+      }, { status: 500 });
     }
 
     return Response.json(diagnosis);
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }

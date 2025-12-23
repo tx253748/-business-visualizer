@@ -663,7 +663,7 @@ const BusinessVisualizer = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
-            <button onClick={() => funnelStep === 0 ? setPhase('basics') : setFunnelStep(funnelStep - 1)} style={{ padding: '12px 24px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff', color: '#475569', cursor: 'pointer', fontSize: '14px' }}>戻る</button>
+            <button onClick={() => funnelStep === 0 ? setPhase('details') : setFunnelStep(funnelStep - 1)} style={{ padding: '12px 24px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff', color: '#475569', cursor: 'pointer', fontSize: '14px' }}>戻る</button>
             <button onClick={async () => { 
               if (funnelStep < funnel.length - 1) { 
                 setFunnelStep(funnelStep + 1); 
@@ -678,13 +678,15 @@ const BusinessVisualizer = () => {
                   });
                   const data = await response.json();
                   if (data.error) {
-                    setApiError(data.error);
+                    const errorMsg = data.details ? `${data.error}: ${data.details}` : data.error;
+                    setApiError(errorMsg);
                     setAiDiagnosis(null);
                   } else {
                     setAiDiagnosis(data);
+                    setApiError(null);
                   }
                 } catch (err) {
-                  setApiError('診断中にエラーが発生しました');
+                  setApiError(`診断中にエラーが発生しました: ${err.message}`);
                   setAiDiagnosis(null);
                 }
                 setIsAnalyzing(false);
@@ -701,9 +703,20 @@ const BusinessVisualizer = () => {
   if (isAnalyzing) {
     return (
       <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔍</div>
-          <p style={{ fontSize: '16px', color: '#1e293b', fontWeight: '600' }}>分析中...</p>
+        <div style={{ textAlign: 'center', background: '#fff', padding: '48px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div style={{ 
+            width: '48px', 
+            height: '48px', 
+            border: '4px solid #e2e8f0', 
+            borderTop: '4px solid #3b82f6', 
+            borderRadius: '50%', 
+            margin: '0 auto 20px',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          <p style={{ fontSize: '18px', color: '#1e293b', fontWeight: '700', margin: '0 0 8px 0' }}>AI分析中...</p>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>入力内容を元に診断しています</p>
+          <p style={{ fontSize: '12px', color: '#94a3b8', margin: '16px 0 0 0' }}>10〜20秒ほどかかります</p>
         </div>
       </div>
     );
