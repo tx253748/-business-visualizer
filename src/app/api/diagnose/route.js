@@ -61,11 +61,15 @@ export async function POST(request) {
 
 ## 現状（ファネル別）
 ${funnel.map(f => {
-  const answer = answers[f.id] || { selections: [], metric: '', feeling: null, note: '' };
+  const answer = answers[f.id] || { selections: [], metric: '', feelings: {}, note: '' };
+  const feelingMap = { good: '◎', ok: '△', bad: '×' };
+  const selectionsWithFeelings = answer.selections.map(s => {
+    const feeling = answer.feelings?.[s];
+    return feeling ? `${s}(${feelingMap[feeling]})` : s;
+  });
   return `### ${f.label}
-- 施策: ${answer.selections.length > 0 ? answer.selections.join(', ') : 'なし'}
+- 施策と手応え: ${selectionsWithFeelings.length > 0 ? selectionsWithFeelings.join(', ') : 'なし'}
 - 数字: ${answer.metric || '不明'}
-- 手応え: ${answer.feeling === 'good' ? '良い' : answer.feeling === 'ok' ? 'まあまあ' : answer.feeling === 'bad' ? 'いまいち' : '未回答'}
 - 備考: ${answer.note || 'なし'}`;
 }).join('\n\n')}
 

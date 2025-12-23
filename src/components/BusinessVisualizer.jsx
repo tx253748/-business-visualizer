@@ -79,37 +79,51 @@ const BusinessVisualizer = () => {
   const getUserScores = () => {
     const scores = {};
     
+    // 手応えからボーナス点を計算する関数
+    const getFeelingBonus = (feelings) => {
+      if (!feelings) return 0;
+      const values = Object.values(feelings).filter(f => f);
+      if (values.length === 0) return 0;
+      let bonus = 0;
+      values.forEach(f => {
+        if (f === 'good') bonus += 20;
+        else if (f === 'ok') bonus += 10;
+        // bad は 0
+      });
+      return Math.round(bonus / values.length);
+    };
+    
     // 認知力
     const awarenessCount = (answers.awareness?.selections || []).length;
-    const awarenessFeeling = answers.awareness?.feeling;
-    scores.awareness_score = Math.min(100, awarenessCount * 15 + (awarenessFeeling === 'good' ? 20 : awarenessFeeling === 'ok' ? 10 : 0));
+    const awarenessBonus = getFeelingBonus(answers.awareness?.feelings);
+    scores.awareness_score = Math.min(100, awarenessCount * 15 + awarenessBonus);
     
     // 興味喚起力
     const interestCount = (answers.interest?.selections || []).length;
-    const interestFeeling = answers.interest?.feeling;
-    scores.interest_score = Math.min(100, interestCount * 15 + (interestFeeling === 'good' ? 20 : interestFeeling === 'ok' ? 10 : 0));
+    const interestBonus = getFeelingBonus(answers.interest?.feelings);
+    scores.interest_score = Math.min(100, interestCount * 15 + interestBonus);
     
     // 行動誘導力
     const actionCount = (answers.action?.selections || []).length;
-    const actionFeeling = answers.action?.feeling;
-    scores.action_score = Math.min(100, actionCount * 20 + (actionFeeling === 'good' ? 20 : actionFeeling === 'ok' ? 10 : 0));
+    const actionBonus = getFeelingBonus(answers.action?.feelings);
+    scores.action_score = Math.min(100, actionCount * 20 + actionBonus);
     
     // 成約力
     const purchaseCount = (answers.purchase?.selections || []).length;
-    const purchaseFeeling = answers.purchase?.feeling;
-    scores.conversion_score = Math.min(100, purchaseCount * 15 + (purchaseFeeling === 'good' ? 25 : purchaseFeeling === 'ok' ? 10 : 0));
+    const purchaseBonus = getFeelingBonus(answers.purchase?.feelings);
+    scores.conversion_score = Math.min(100, purchaseCount * 15 + purchaseBonus);
     
     // 顧客対応力
     const followSelections = answers.follow?.selections || [];
-    const followFeeling = answers.follow?.feeling;
+    const followBonus = getFeelingBonus(answers.follow?.feelings);
     const hasNoFollow = followSelections.includes('特になし');
-    scores.follow_score = hasNoFollow ? 10 : Math.min(100, followSelections.length * 15 + (followFeeling === 'good' ? 20 : followFeeling === 'ok' ? 10 : 0));
+    scores.follow_score = hasNoFollow ? 10 : Math.min(100, followSelections.length * 15 + followBonus);
     
     // リピート力
     const repeatSelections = answers.repeat?.selections || [];
-    const repeatFeeling = answers.repeat?.feeling;
+    const repeatBonus = getFeelingBonus(answers.repeat?.feelings);
     const hasNoRepeat = repeatSelections.includes('特に仕組みなし') || repeatSelections.includes('自然発生');
-    scores.repeat_score = hasNoRepeat ? 15 : Math.min(100, repeatSelections.length * 15 + (repeatFeeling === 'good' ? 20 : repeatFeeling === 'ok' ? 10 : 0));
+    scores.repeat_score = hasNoRepeat ? 15 : Math.min(100, repeatSelections.length * 15 + repeatBonus);
     
     return scores;
   };
@@ -322,37 +336,45 @@ const BusinessVisualizer = () => {
 
   const handleSelect = (funnelId, option) => {
     setAnswers(prev => {
-      const current = prev[funnelId] || { selections: [], metric: '', feeling: null, note: '' };
-      const selections = current.selections.includes(option)
-        ? current.selections.filter(s => s !== option)
-        : [...current.selections, option];
-      return { ...prev, [funnelId]: { ...current, selections } };
+      const current = prev[funnelId] || { selections: [], metric: '', feelings: {}, note: '' };
+      let selections, feelings;
+      if (current.selections.includes(option)) {
+        // 削除
+        selections = current.selections.filter(s => s !== option);
+        feelings = { ...current.feelings };
+        delete feelings[option];
+      } else {
+        // 追加
+        selections = [...current.selections, option];
+        feelings = { ...current.feelings, [option]: null };
+      }
+      return { ...prev, [funnelId]: { ...current, selections, feelings } };
     });
   };
 
   const handleMetric = (funnelId, value) => {
     setAnswers(prev => {
-      const current = prev[funnelId] || { selections: [], metric: '', feeling: null, note: '' };
+      const current = prev[funnelId] || { selections: [], metric: '', feelings: {}, note: '' };
       return { ...prev, [funnelId]: { ...current, metric: value } };
     });
   };
 
-  const handleFeeling = (funnelId, value) => {
+  const handleFeeling = (funnelId, option, value) => {
     setAnswers(prev => {
-      const current = prev[funnelId] || { selections: [], metric: '', feeling: null, note: '' };
-      return { ...prev, [funnelId]: { ...current, feeling: value } };
+      const current = prev[funnelId] || { selections: [], metric: '', feelings: {}, note: '' };
+      return { ...prev, [funnelId]: { ...current, feelings: { ...current.feelings, [option]: value } } };
     });
   };
 
   const handleNote = (funnelId, value) => {
     setAnswers(prev => {
-      const current = prev[funnelId] || { selections: [], metric: '', feeling: null, note: '' };
+      const current = prev[funnelId] || { selections: [], metric: '', feelings: {}, note: '' };
       return { ...prev, [funnelId]: { ...current, note: value } };
     });
   };
 
   const getCurrentAnswer = (funnelId) => {
-    return answers[funnelId] || { selections: [], metric: '', feeling: null, note: '' };
+    return answers[funnelId] || { selections: [], metric: '', feelings: {}, note: '' };
   };
 
   const getFeelingStyle = (feeling) => {
@@ -591,6 +613,29 @@ const BusinessVisualizer = () => {
     );
   }
 
+  // 分析中（最優先でチェック）
+  if (isAnalyzing) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', background: '#fff', padding: '48px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div style={{ 
+            width: '48px', 
+            height: '48px', 
+            border: '4px solid #e2e8f0', 
+            borderTop: '4px solid #3b82f6', 
+            borderRadius: '50%', 
+            margin: '0 auto 20px',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          <p style={{ fontSize: '18px', color: '#1e293b', fontWeight: '700', margin: '0 0 8px 0' }}>AI分析中...</p>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>入力内容を元に診断しています</p>
+          <p style={{ fontSize: '12px', color: '#94a3b8', margin: '16px 0 0 0' }}>10〜20秒ほどかかります</p>
+        </div>
+      </div>
+    );
+  }
+
   // Phase: ファネル入力
   if (phase === 'funnel') {
     const currentFunnel = funnel[funnelStep];
@@ -627,26 +672,39 @@ const BusinessVisualizer = () => {
               </div>
             </div>
 
+            {/* 選択した施策ごとの手応え */}
+            {currentAnswer.selections.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>施策ごとの手応え</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {currentAnswer.selections.map(opt => {
+                    const feeling = currentAnswer.feelings[opt];
+                    return (
+                      <div key={opt} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '10px 12px', borderRadius: '6px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '500', color: '#1e293b', minWidth: '100px' }}>{opt}</span>
+                        <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                          {[
+                            { value: 'good', label: '◎', bg: '#dcfce7', border: '#86efac', color: '#166534' },
+                            { value: 'ok', label: '△', bg: '#fef9c3', border: '#fde047', color: '#854d0e' },
+                            { value: 'bad', label: '×', bg: '#fee2e2', border: '#fca5a5', color: '#991b1b' },
+                          ].map(f => {
+                            const isSelected = feeling === f.value;
+                            return (
+                              <button key={f.value} onClick={() => handleFeeling(currentFunnel.id, opt, f.value)} style={{ padding: '6px 12px', border: isSelected ? `2px solid ${f.border}` : '1px solid #e2e8f0', borderRadius: '4px', background: isSelected ? f.bg : '#fff', color: isSelected ? f.color : '#94a3b8', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>{f.label}</button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>数字（分かる範囲で）</p>
               <p style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px' }}>{currentFunnel.metricHint}</p>
               <input type="text" value={currentAnswer.metric} onChange={(e) => handleMetric(currentFunnel.id, e.target.value)} placeholder="分からなければ空欄でOK" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>手応え</p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[
-                  { value: 'good', label: '◎ いい感じ', bg: '#dcfce7', border: '#86efac', color: '#166534' },
-                  { value: 'ok', label: '△ まあまあ', bg: '#fef9c3', border: '#fde047', color: '#854d0e' },
-                  { value: 'bad', label: '× いまいち', bg: '#fee2e2', border: '#fca5a5', color: '#991b1b' },
-                ].map(opt => {
-                  const isSelected = currentAnswer.feeling === opt.value;
-                  return (
-                    <button key={opt.value} onClick={() => handleFeeling(currentFunnel.id, opt.value)} style={{ flex: 1, padding: '12px 8px', border: isSelected ? `2px solid ${opt.border}` : '1px solid #e2e8f0', borderRadius: '8px', background: isSelected ? opt.bg : '#fff', color: isSelected ? opt.color : '#64748b', cursor: 'pointer', fontSize: '13px', fontWeight: isSelected ? '600' : '400' }}>{opt.label}</button>
-                  );
-                })}
-              </div>
             </div>
 
             <div>
@@ -694,29 +752,6 @@ const BusinessVisualizer = () => {
               } 
             }} style={{ padding: '12px 24px', border: 'none', borderRadius: '8px', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>{funnelStep < funnel.length - 1 ? '次へ' : '診断する'}</button>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 分析中
-  if (isAnalyzing) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', background: '#fff', padding: '48px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-          <div style={{ 
-            width: '48px', 
-            height: '48px', 
-            border: '4px solid #e2e8f0', 
-            borderTop: '4px solid #3b82f6', 
-            borderRadius: '50%', 
-            margin: '0 auto 20px',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-          <p style={{ fontSize: '18px', color: '#1e293b', fontWeight: '700', margin: '0 0 8px 0' }}>AI分析中...</p>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>入力内容を元に診断しています</p>
-          <p style={{ fontSize: '12px', color: '#94a3b8', margin: '16px 0 0 0' }}>10〜20秒ほどかかります</p>
         </div>
       </div>
     );
@@ -914,7 +949,6 @@ const BusinessVisualizer = () => {
                     <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', width: '80px' }}>段階</th>
                     <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>あなたの現状</th>
                     <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', width: '80px' }}>数字</th>
-                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', width: '60px' }}>手応え</th>
                     <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', background: '#f1f5f9' }}>業界標準</th>
                   </tr>
                 </thead>
@@ -922,21 +956,35 @@ const BusinessVisualizer = () => {
                   {funnel.map((f, i) => {
                     const answer = getCurrentAnswer(f.id);
                     const yours = answer.selections;
-                    const feelingStyle = getFeelingStyle(answer.feeling);
+                    const feelings = answer.feelings || {};
                     const standardItems = industryStandard[f.id] || [];
+                    
+                    const getFeelingBadge = (feeling) => {
+                      switch(feeling) {
+                        case 'good': return { label: '◎', bg: '#dcfce7', color: '#166534' };
+                        case 'ok': return { label: '△', bg: '#fef9c3', color: '#854d0e' };
+                        case 'bad': return { label: '×', bg: '#fee2e2', color: '#991b1b' };
+                        default: return null;
+                      }
+                    };
                     
                     return (
                       <tr key={f.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '12px', fontWeight: '600' }}>{f.label}</td>
                         <td style={{ padding: '12px' }}>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                            {yours.length > 0 ? yours.map((item, j) => (
-                              <span key={j} style={{ background: '#dbeafe', color: '#1e40af', borderRadius: '4px', padding: '2px 8px', fontSize: '11px' }}>{item}</span>
-                            )) : <span style={{ color: '#94a3b8' }}>（未入力）</span>}
+                            {yours.length > 0 ? yours.map((item, j) => {
+                              const badge = getFeelingBadge(feelings[item]);
+                              return (
+                                <span key={j} style={{ background: badge ? badge.bg : '#dbeafe', color: badge ? badge.color : '#1e40af', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  {item}
+                                  {badge && <span style={{ fontWeight: '700' }}>{badge.label}</span>}
+                                </span>
+                              );
+                            }) : <span style={{ color: '#94a3b8' }}>（未入力）</span>}
                           </div>
                         </td>
                         <td style={{ padding: '12px', textAlign: 'center', color: answer.metric ? '#1e293b' : '#94a3b8' }}>{answer.metric || '?'}</td>
-                        <td style={{ padding: '12px', textAlign: 'center' }}><span style={{ background: feelingStyle.bg, color: feelingStyle.color, borderRadius: '4px', padding: '2px 8px', fontWeight: '700' }}>{feelingStyle.label}</span></td>
                         <td style={{ padding: '12px', background: '#f8fafc' }}>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                             {standardItems.map((item, j) => (
